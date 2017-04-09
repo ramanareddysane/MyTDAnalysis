@@ -50,7 +50,7 @@ public class QuerySearch {
         try {
             encoded_query = URLEncoder.encode(query, "UTF-8");
         } catch (UnsupportedEncodingException ex) {
-            Logger.getLogger(QuerySearch.class.getName()).log(Level.SEVERE, null, ex);
+            System.out.println(ex.getMessage());
         }
         String base_url = "https://api.twitter.com/1.1/search/tweets.json?"
                     + "q="+encoded_query
