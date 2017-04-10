@@ -27,6 +27,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.CoreConnectionPNames;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -44,6 +45,8 @@ public class MyStreamingApiExample {
     final String CONFIG_FILE_PATH = "/home/ram/NetBeansProjects/MyTDAnalysis/src/main/java/streamingapi/searchKeywords.txt";
     final String DEF_OUTPATH = "/home/ram/NetBeansProjects/MyTDAnalysis/src/main/java/streamingapi/tweets/";
     
+    final String USERS_FILE_PATH ="/home/ram/NetBeansProjects/MyTDAnalysis/src/main/java/streamingapi/user_ids.txt";
+    final String LOCATIONS_PATH = "/home/ram/NetBeansProjects/MyTDAnalysis/src/main/java/streamingapi/geo.txt";
     /**
      * Loads the Twitter access token and secret for a user
      */
@@ -67,6 +70,11 @@ public class MyStreamingApiExample {
                 consumer.sign(httppost);
         } catch (Exception ex) {
                 ex.printStackTrace();
+        }
+        try {
+            System.out.println("generated body of url:"+EntityUtils.toString(httppost.getEntity()));
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
         }
         HttpResponse response;
         InputStream is = null;
@@ -150,9 +158,67 @@ public class MyStreamingApiExample {
         String filename = sae.CONFIG_FILE_PATH;
         String outfilepath = sae.DEF_OUTPATH;
         sae.readParameters(filename);
+
+        String userfilepath =sae.USERS_FILE_PATH;
+        sae.readUsers(userfilepath);
+        String location_file_path = sae.LOCATIONS_PATH;
+        sae.readLocations(location_file_path);
+        
         sae.createStreamingConnection("https://stream.twitter.com/1.1/statuses/filter.json", outfilepath);
     }
-
+    
+    
+    public void readUsers(String filename) throws IOException{
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(new InputStreamReader(
+                    new FileInputStream(filename), "UTF-8"));
+            if(Userids == null)
+                Userids = new HashSet<String>();
+            String temp ="";
+             while ((temp = br.readLine()) != null) {
+                String[] users = temp.split(" ");
+                for (String word : users) {
+                    if (!Userids.contains(word)) {
+                        Userids.add(word);
+                    }
+                }
+            }
+        } finally{
+            try {
+                br.close();
+            } finally{
+                
+            }
+        }
+    }
+    
+    public void readLocations(String filename) throws IOException{
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(new InputStreamReader(
+                    new FileInputStream(filename), "UTF-8"));
+            if(Geoboxes == null)
+                Geoboxes = new HashSet<String>();
+            String temp ="";
+             while ((temp = br.readLine()) != null) {
+                String[] users = temp.split(" ");
+                for (String word : users) {
+                    if (!Geoboxes.contains(word)) {
+                        Geoboxes.add(word);
+                    }
+                }
+            }
+        } finally{
+            try {
+                br.close();
+            } finally{
+                
+            }
+        }
+    }
+    
+    
     public void readParameters(String filename) throws IOException {
 
         BufferedReader br = null;
@@ -164,7 +230,7 @@ public class MyStreamingApiExample {
                 Keywords = new HashSet<String>();
             }
             while ((temp = br.readLine()) != null) {
-                String[] keywords = temp.split("\t");
+                String[] keywords = temp.split(" ");
                 for (String word : keywords) {
                     if (!Keywords.contains(word)) {
                         Keywords.add(word);
@@ -181,7 +247,8 @@ public class MyStreamingApiExample {
         if (Keywords != null&&Keywords.size()>0) {
             params.add(createNameValuePair("track", Keywords));
             
-            System.out.println("keywords = "+Keywords);
+            params.add(createNameValuePair("follow", Userids));
+            params.add(createNameValuePair("locations", Geoboxes));
         }
         return params;
     }
